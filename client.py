@@ -1,10 +1,30 @@
 import tkinter as tk
 import socket
 import threading
+import sys
+
+# HOST = '127.0.0.1'  # Server IP address
+# PORT = 6788         # Server port
+
+if len(sys.argv) < 3:
+    print(f'Usage: python {sys.argv[0]} <host> <port>')
+    sys.exit(1)
+
+HOST = sys.argv[1]
+PORT = int(sys.argv[2])
 
 def send_message():
+    max_message_length = 1000
     message = entry_field.get()
     if message:
+        if len(message) > max_message_length:
+            error_message = f"Please send a message no greater than {max_message_length} characters.\n"
+            chat_log.config(state=tk.NORMAL)
+            chat_log.see(tk.END)
+            chat_log.insert(tk.END, error_message)
+            chat_log.config(state=tk.DISABLED)
+            entry_field.delete(0, tk.END)
+            return
         chat_log.config(state=tk.NORMAL)
         chat_log.see(tk.END)
         chat_log.insert(tk.END, "You: " + message + "\n")
@@ -36,7 +56,7 @@ def on_enter(event):
 
 # Create the main window
 root = tk.Tk()
-root.title("Simple Chat")
+root.title(HOST)
 
 # Create a frame for the chat log
 chat_frame = tk.Frame(root)
@@ -71,8 +91,6 @@ send_button.pack(side=tk.RIGHT)
 entry_field.focus_set()
 
 # Connect to the server
-HOST = '127.0.0.1'  # Server IP address
-PORT = 6789         # Server port
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 

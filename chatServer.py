@@ -2,6 +2,7 @@ from socket import *
 import threading
 
 SIZE = 2048
+MAX_MESSAGE_SIZE = 250
 connections = []
 
 class User:
@@ -18,7 +19,11 @@ class User:
 def doCommand(message, user):
     message = message.split(" ")
     if message[0] == "/NAME":
-        user.name = message[1].replace("\n","")
+        newName = message[1].replace("\n","")
+        if len(newName) > 20:
+            user.conn.send("Name not set. Please pick a name 20 characters or less\n".encode())
+            return
+        user.name = newName
     elif message[0] == "/DISCONNECT":
         user.conn.close()
         print(f"[DISCONNECTION] {user} disconnected")
@@ -50,7 +55,7 @@ def singlecast(name, message, user):
                 return
         user.conn.send(f"{name} not found\n".encode())
     else:
-        user.conn.send("Please pick a name using \"/NAME\" command\n".encode())
+        user.conn.send("Message not sent. Please pick a name using \"/NAME\" command\n".encode())
     return
 
         
@@ -59,6 +64,8 @@ def handle_client(user):
     user.conn.send("Welcome to the server!\n".encode())
     while True:
         data = user.conn.recv(SIZE).decode()
+        if len(data) > MAX_MESSAGE_SIZE:
+            continue
         data = data.replace("\r", "")
         data = data.replace("\n", "")
         print(f"{user}: {data}")
@@ -76,7 +83,7 @@ def handle_client(user):
 def main():
     serverSocket = socket(AF_INET, SOCK_STREAM)
     IP = ""
-    PORT = 6789
+    PORT = 6788
     ADDR = (IP, PORT)
     print("Server binding...")
     serverSocket.bind(ADDR)
